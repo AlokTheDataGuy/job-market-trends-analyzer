@@ -1,0 +1,85 @@
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+*.spec
+
+# ---- Virtual Environments ----
+venv/
+.venv/
+ENV/
+env/
+.env/
+pip-wheel-metadata/
+
+# ---- FastAPI / Backend ----
+*.db
+*.sqlite
+instance/
+*.log
+logs/
+cache/
+.DS_Store
+
+# ---- Node / React / Frontend ----
+node_modules/
+dist/
+dist-ssr/
+*.local
+.npm/
+.pnp/
+.pnp.js
+coverage/
+*.tsbuildinfo
+
+# ---- Environment & Config ----
+.env
+.env.*
+!.env.example
+*.secret
+*.token
+*.pem
+*.key
+
+# ---- Editors & OS ----
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.iml
+*.swp
+*.swo
+*.swn
+*.bak
+*.tmp
+Thumbs.db
+.DS_Store
+Desktop.ini
+
+# ---- Data files (exclude from Git) ----
+*.csv
+*.xls
+*.xlsx
+*.pdf
+*.ods
+*.odt
+*.rtf
+
+# ---- Reports & Outputs ----
+output/
+reports/
+exports/
+uploads/
+downloads/
+
+# ---- Testing ----
+.pytest_cache/
+.tox/
+.coverage
+htmlcov/

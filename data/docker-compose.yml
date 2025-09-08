@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  jobspy-api:
+    image: rainmanjam/jobspy-api:latest
+    ports:
+      - "8000:8000"
+    environment:
+      # API Security
+      - API_KEYS=your-api-key-1,your-api-key-2
+      - ENABLE_API_KEY_AUTH=true
+      
+      # Rate Limiting
+      - RATE_LIMIT_ENABLED=true
+      - RATE_LIMIT_REQUESTS=100
+      - RATE_LIMIT_TIMEFRAME=3600
+      
+      # Default Settings
+      - DEFAULT_RESULTS_WANTED=20
+      - DEFAULT_DISTANCE=50
+      - DEFAULT_COUNTRY_INDEED=USA
+      
+      # Proxy Configuration (if needed)
+      # - DEFAULT_PROXIES=user:pass@host:port
+      
+      # Logging
+      - LOG_LEVEL=INFO
+      - ENVIRONMENT=production
+    restart: unless-stopped
