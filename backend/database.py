@@ -63,7 +63,8 @@ class MongoDB:
             
             # Market summary collection indexes
             self.market_summary.create_index([("date", DESCENDING)])
-            
+            self.jobs.create_index([("title", "text"), ("description", "text")])
+
             logger.info("✅ Database indexes created")
             
         except Exception as e:

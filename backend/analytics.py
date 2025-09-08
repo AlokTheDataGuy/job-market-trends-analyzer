@@ -244,13 +244,17 @@ class JobAnalytics:
             
             locations = list(self.jobs.aggregate(location_pipeline))
             
+            total_jobs = sum(d['job_count'] for d in daily_data)
+            if total_jobs == 0:
+                return None
+            
             return {
                 "skill": skill_name,
                 "period_days": days,
                 "daily_trend": daily_data,
                 "top_companies": companies,
                 "top_locations": locations,
-                "total_jobs": sum(d['job_count'] for d in daily_data)
+                "total_jobs": total_jobs
             }
             
         except Exception as e:

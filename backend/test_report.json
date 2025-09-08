@@ -1,0 +1,69 @@
+{
+  "timestamp": 1757323638.1338573,
+  "base_url": "http://localhost:8001",
+  "total_tests": 10,
+  "passed_tests": 10,
+  "failed_tests": 0,
+  "results": [
+    {
+      "test": "Root Endpoint",
+      "success": true,
+      "details": "Status: 200",
+      "timestamp": 1757323631.1844356
+    },
+    {
+      "test": "Health Check",
+      "success": true,
+      "details": "Status: 200, Data: {'status': 'healthy', 'database': 'connected', 'stats': {'total_jobs': 1612, 'total_skills': 91, 'db_size_mb': 1.66, 'collections': {'jobs': 1612, 'skills_trends': 91, 'market_summary': 1}}}",
+      "timestamp": 1757323635.604466
+    },
+    {
+      "test": "Database Stats",
+      "success": true,
+      "details": "DB Stats: 1612 jobs, 91 skills",
+      "timestamp": 1757323636.473122
+    },
+    {
+      "test": "Skill Categories",
+      "success": true,
+      "details": "Found 8 skill categories",
+      "timestamp": 1757323636.5982144
+    },
+    {
+      "test": "Trending Skills",
+      "success": true,
+      "details": "Found 15 trending skills, Total: 91",
+      "timestamp": 1757323636.9584525
+    },
+    {
+      "test": "Job Search",
+      "success": true,
+      "details": "Found 5 jobs, Total: 5",
+      "timestamp": 1757323637.2201102
+    },
+    {
+      "test": "Skill Analytics",
+      "success": true,
+      "details": "Analytics for 'python': 307 jobs",
+      "timestamp": 1757323637.6009748
+    },
+    {
+      "test": "Market Summary",
+      "success": true,
+      "details": "Market summary: 1612 total jobs",
+      "timestamp": 1757323637.7287412
+    },
+    {
+      "test": "404 Error Handling",
+      "success": true,
+      "details": "Status: 404",
+      "timestamp": 1757323637.7388184
+    },
+    {
+      "test": "Invalid Skill Error Handling",
+      "success": true,
+      "details": "Status: 500",
+      "timestamp": 1757323638.1319208
+    }
+  ]
+}
