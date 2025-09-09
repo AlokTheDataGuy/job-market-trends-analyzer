@@ -168,7 +168,7 @@ const SkillsTable = ({ skills: propSkills }) => {
       setError(null);
       
       const response = await apiService.getTrendingSkills({
-        limit: 50,
+        limit: 20,
         sort_by: 'job_count_30d'
       });
 
@@ -332,7 +332,7 @@ const SkillsTable = ({ skills: propSkills }) => {
                 <span>Most in-demand skills in the market</span>
                 {processedSkills.length > 0 && (
                   <Badge variant="secondary" className="ml-2">
-                    {processedSkills.length} skills
+                    Top {processedSkills.length} skills
                   </Badge>
                 )}
               </CardDescription>

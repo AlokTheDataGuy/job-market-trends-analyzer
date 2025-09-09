@@ -114,10 +114,21 @@ async def get_skill_analytics(skill_name: str, days: int = Query(30, ge=7, le=36
     try:
         from analytics import JobAnalytics
         analytics = JobAnalytics(db.jobs, db.skills_trends, db.market_summary)
+        
+        # Try with original case first, then lowercase if no results
         data = analytics.get_skill_growth_analytics(skill_name, days)
         
+        if data is None or (data.get('timeline') and len(data['timeline']) == 0):
+            # Try with lowercase
+            data = analytics.get_skill_growth_analytics(skill_name.lower(), days)
+        
         if data is None:
-            raise HTTPException(status_code=404, detail=f"No data found for skill: {skill_name}")
+            # Return empty but valid structure instead of 404
+            return APIResponse(
+                success=True, 
+                message=f"No data found for skill: {skill_name}", 
+                data={"skill": skill_name, "timeline": [], "total_jobs": 0}
+            )
             
         return APIResponse(success=True, message=f"Analytics for {skill_name}", data=data)
         

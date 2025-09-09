@@ -11,14 +11,14 @@ import {
   Legend,
   ResponsiveContainer
 } from 'recharts';
-import { 
-  TrendingUp, 
-  Calendar, 
-  Eye, 
-  EyeOff, 
+import {
+  TrendingUp,
+  Calendar,
+  Eye,
+  EyeOff,
   BarChart3,
   RefreshCw,
-  AlertCircle 
+  AlertCircle
 } from 'lucide-react';
 
 // Import shadcn/ui components
@@ -55,8 +55,8 @@ const CustomTooltip = ({ active, payload, label }) => {
       <div className="space-y-1">
         {payload.map((entry, index) => (
           <div key={index} className="flex items-center space-x-2">
-            <div 
-              className="w-3 h-3 rounded-full" 
+            <div
+              className="w-3 h-3 rounded-full"
               style={{ backgroundColor: entry.color }}
             />
             <span className="text-sm text-muted-foreground">
@@ -89,19 +89,18 @@ const CustomLegend = ({ payload, visibleSkills, onToggleSkill }) => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: index * 0.05 }}
             onClick={() => onToggleSkill(entry.dataKey)}
-            className={`inline-flex items-center space-x-2 px-3 py-1 rounded-full text-sm font-medium transition-all duration-200 ${
-              isVisible 
-                ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400' 
+            className={`inline-flex items-center space-x-2 px-3 py-1 rounded-full text-sm font-medium transition-all duration-200 ${isVisible
+                ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400'
                 : 'bg-muted text-muted-foreground hover:bg-muted/80'
-            }`}
+              }`}
           >
             {isVisible ? (
               <Eye className="h-3 w-3" />
             ) : (
               <EyeOff className="h-3 w-3" />
             )}
-            <div 
-              className="w-2 h-2 rounded-full" 
+            <div
+              className="w-2 h-2 rounded-full"
               style={{ backgroundColor: isVisible ? entry.color : '#ccc' }}
             />
             <span>{entry.dataKey}</span>
@@ -155,7 +154,7 @@ const TrendChart = ({ data: propData }) => {
       setError(null);
 
       const currentRange = timeRangeOptions.find(range => range.value === selectedTimeRange);
-      
+
       // Fetch trending skills for the selected time range
       const trendingResponse = await apiService.getTrendingSkills({
         days: currentRange.days,
@@ -174,23 +173,31 @@ const TrendChart = ({ data: propData }) => {
         trendingResponse.skills.slice(0, 8).map(async (skill) => {
           try {
             const analytics = await apiService.getSkillAnalytics(
-              skill.skill_name, 
+              skill.skill_name,
               currentRange.days
             );
+
+            // Validate the response
+            if (!analytics || !analytics.timeline) {
+              console.warn(`Invalid analytics response for ${skill.skill_name}`);
+              return null;
+            }
+
+            // Filter out empty timelines
+            if (analytics.timeline.length === 0) {
+              console.warn(`Empty timeline for ${skill.skill_name}`);
+              return null;
+            }
+
             return {
               skill_name: skill.skill_name,
-              history: analytics.timeline || [],
-              total_jobs: skill.job_count_30d || 0,
+              history: analytics.timeline,
+              total_jobs: analytics.total_jobs || 0,
               growth_rate: skill.growth_rate || 0
             };
           } catch (error) {
             console.warn(`Failed to get analytics for ${skill.skill_name}:`, error);
-            return {
-              skill_name: skill.skill_name,
-              history: [],
-              total_jobs: skill.job_count_30d || 0,
-              growth_rate: skill.growth_rate || 0
-            };
+            return null;
           }
         })
       );
@@ -202,7 +209,7 @@ const TrendChart = ({ data: propData }) => {
         .filter(skill => skill.history && skill.history.length > 0);
 
       setSkillsData(validSkills);
-      
+
       // Initialize visibility state for all skills
       const initialVisibility = {};
       validSkills.forEach((skill, index) => {
@@ -240,12 +247,12 @@ const TrendChart = ({ data: propData }) => {
     // Create chart data points
     return sortedDates.map(date => {
       const dataPoint = { date };
-      
+
       skillsData.forEach(skill => {
         const historyPoint = skill.history.find(h => h.date === date);
         dataPoint[skill.skill_name] = historyPoint ? historyPoint.count : 0;
       });
-      
+
       return dataPoint;
     });
   }, [skillsData]);
@@ -279,7 +286,7 @@ const TrendChart = ({ data: propData }) => {
     if (propData && Array.isArray(propData)) {
       setSkillsData(propData);
       setChartData(propData);
-      
+
       // Initialize visibility for prop data
       const initialVisibility = {};
       propData.forEach((skill, index) => {
@@ -344,9 +351,9 @@ const TrendChart = ({ data: propData }) => {
           <AlertCircle className="h-4 w-4 text-error-500" />
           <AlertDescription className="text-error-700 dark:text-error-400">
             {error}
-            <Button 
-              variant="link" 
-              size="sm" 
+            <Button
+              variant="link"
+              size="sm"
               onClick={fetchTrendData}
               className="ml-2 text-error-600 hover:text-error-700"
             >
@@ -377,11 +384,11 @@ const TrendChart = ({ data: propData }) => {
             No trend data available
           </h3>
           <p className="text-sm text-muted-foreground max-w-sm">
-            There's no skill trend data available for the selected time range. 
+            There's no skill trend data available for the selected time range.
             Try selecting a different time period.
           </p>
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={fetchTrendData}
             className="mt-4"
           >
@@ -433,7 +440,7 @@ const TrendChart = ({ data: propData }) => {
                 )}
               </CardDescription>
             </div>
-            
+
             {/* Time Range Selector */}
             <div className="flex items-center space-x-2">
               <Select value={selectedTimeRange} onValueChange={handleTimeRangeChange}>
@@ -448,10 +455,10 @@ const TrendChart = ({ data: propData }) => {
                   ))}
                 </SelectContent>
               </Select>
-              
-              <Button 
-                variant="outline" 
-                size="sm" 
+
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={fetchTrendData}
                 disabled={isLoading}
               >
@@ -460,7 +467,7 @@ const TrendChart = ({ data: propData }) => {
             </div>
           </div>
         </CardHeader>
-        
+
         <CardContent>
           {/* Chart Container */}
           <div className="w-full h-[400px]">
@@ -474,9 +481,9 @@ const TrendChart = ({ data: propData }) => {
                   bottom: 0,
                 }}
               >
-                <CartesianGrid 
-                  strokeDasharray="3 3" 
-                  stroke="hsl(var(--border))" 
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke="hsl(var(--border))"
                   opacity={0.5}
                 />
                 <XAxis
@@ -497,16 +504,16 @@ const TrendChart = ({ data: propData }) => {
                   axisLine={false}
                   tickFormatter={(value) => `${value}`}
                 />
-                <Tooltip 
+                <Tooltip
                   content={<CustomTooltip />}
                   cursor={{ stroke: "hsl(var(--border))", strokeWidth: 1 }}
                 />
-                
+
                 {/* Render lines for each visible skill */}
                 {skillsData.map((skill, index) => {
                   const isVisible = visibleSkills[skill.skill_name];
                   if (!isVisible) return null;
-                  
+
                   return (
                     <Line
                       key={skill.skill_name}
@@ -514,13 +521,13 @@ const TrendChart = ({ data: propData }) => {
                       dataKey={skill.skill_name}
                       stroke={chartColors[index % chartColors.length]}
                       strokeWidth={2}
-                      dot={{ 
-                        fill: chartColors[index % chartColors.length], 
+                      dot={{
+                        fill: chartColors[index % chartColors.length],
                         strokeWidth: 2,
                         r: 3
                       }}
-                      activeDot={{ 
-                        r: 5, 
+                      activeDot={{
+                        r: 5,
                         stroke: chartColors[index % chartColors.length],
                         strokeWidth: 2,
                         fill: 'hsl(var(--background))'
@@ -560,8 +567,8 @@ const TrendChart = ({ data: propData }) => {
                 {skillsData.slice(0, 6).map((skill, index) => (
                   <div key={skill.skill_name} className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
-                      <div 
-                        className="w-3 h-3 rounded-full" 
+                      <div
+                        className="w-3 h-3 rounded-full"
                         style={{ backgroundColor: chartColors[index % chartColors.length] }}
                       />
                       <span className="text-sm font-medium truncate">

@@ -170,17 +170,26 @@ class JobAnalytics:
             # Total unique skills
             total_unique_skills = self.skills.count_documents({})
             
+            # Total unique companies
+            total_companies = len(self.jobs.distinct("company"))
+
+            # Total unique locations
+            total_locations = len(self.jobs.distinct("location"))
+            
             # Create market summary
             summary = MarketSummary(
-                date=today,
-                total_jobs=total_jobs,
-                new_jobs_24h=new_jobs_24h,
-                top_skills=top_skills,
-                top_companies=top_companies,
-                top_locations=top_locations,
-                skill_categories=skill_categories,
-                total_unique_skills=total_unique_skills
-            )
+            date=today,
+            total_jobs=total_jobs,
+            new_jobs_24h=new_jobs_24h,
+            top_skills=top_skills,
+            top_companies=top_companies,
+            top_locations=top_locations,
+            skill_categories=skill_categories,
+            total_unique_skills=total_unique_skills,
+            total_companies=total_companies,      # 👈 NEW
+            total_locations=total_locations       # 👈 NEW
+        )
+
             
             # Store summary
             self.market.update_one(
@@ -197,63 +206,57 @@ class JobAnalytics:
             return False
 
     def get_skill_growth_analytics(self, skill_name: str, days: int = 30) -> Dict:
-        """Get detailed analytics for specific skill"""
         try:
-            cutoff_date = datetime.now() - timedelta(days=days)
+            end_date = datetime.now()
+            start_date = end_date - timedelta(days=days)
             
-            # Daily job postings for the skill
+            # Generate all dates in the range first
+            date_range = []
+            current = start_date
+            while current <= end_date:
+                date_range.append(current.strftime("%Y-%m-%d"))
+                current += timedelta(days=1)
+            
+            # Get daily job postings
             daily_pipeline = [
                 {"$match": {
-                    "scraped_date": {"$gte": cutoff_date},
-                    "skills_extracted.skill": skill_name
+                    "scraped_date": {"$gte": start_date, "$lte": end_date},
+                    "skills_extracted.skill": {"$regex": f"^{skill_name}$", "$options": "i"}
                 }},
                 {"$group": {
                     "_id": {
                         "$dateToString": {"format": "%Y-%m-%d", "date": "$scraped_date"}
                     },
                     "job_count": {"$sum": 1}
-                }},
-                {"$sort": {"_id": 1}}
+                }}
             ]
             
             daily_data = list(self.jobs.aggregate(daily_pipeline))
+            daily_dict = {d["_id"]: d["job_count"] for d in daily_data}
             
-            # Company distribution
-            company_pipeline = [
-                {"$match": {
-                    "scraped_date": {"$gte": cutoff_date},
-                    "skills_extracted.skill": skill_name
-                }},
-                {"$group": {"_id": "$company", "count": {"$sum": 1}}},
-                {"$sort": {"count": -1}},
-                {"$limit": 10}
-            ]
+            # Create timeline with all dates (fill missing dates with 0)
+            timeline = []
+            for date_str in date_range:
+                timeline.append({
+                    "date": date_str,
+                    "count": daily_dict.get(date_str, 0)
+                })
             
-            companies = list(self.jobs.aggregate(company_pipeline))
+            total_jobs = sum(d["count"] for d in timeline)
             
-            # Location distribution
-            location_pipeline = [
-                {"$match": {
-                    "scraped_date": {"$gte": cutoff_date},
-                    "skills_extracted.skill": skill_name
-                }},
-                {"$group": {"_id": "$location", "count": {"$sum": 1}}},
-                {"$sort": {"count": -1}},
-                {"$limit": 10}
-            ]
-            
-            locations = list(self.jobs.aggregate(location_pipeline))
-            
-            total_jobs = sum(d['job_count'] for d in daily_data)
+            # Return empty timeline if no data
             if total_jobs == 0:
-                return None
+                return {
+                    "skill": skill_name,
+                    "period_days": days,
+                    "timeline": [],
+                    "total_jobs": 0
+                }
             
             return {
                 "skill": skill_name,
                 "period_days": days,
-                "daily_trend": daily_data,
-                "top_companies": companies,
-                "top_locations": locations,
+                "timeline": timeline,
                 "total_jobs": total_jobs
             }
             

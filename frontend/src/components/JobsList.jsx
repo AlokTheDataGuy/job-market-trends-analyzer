@@ -35,12 +35,15 @@ const formatRelativeTime = (dateString) => {
   const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
   const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
 
+  const exactDate = date.toLocaleDateString('en-US', { 
+    month: 'short', 
+    day: 'numeric',
+    year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
+  });
+
   if (diffInDays > 30) {
-    return date.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric',
-      year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
-    });
+    // Only show exact date if too old
+    return exactDate;
   } else if (diffInDays > 0) {
     return `${diffInDays} day${diffInDays === 1 ? '' : 's'} ago`;
   } else if (diffInHours > 0) {
@@ -48,9 +51,10 @@ const formatRelativeTime = (dateString) => {
   } else if (diffInMinutes > 0) {
     return `${diffInMinutes} minute${diffInMinutes === 1 ? '' : 's'} ago`;
   } else {
-    return 'Just now';
+    return `Just now (${exactDate})`;
   }
 };
+
 
 /**
  * Skill Badge Component
@@ -92,21 +96,21 @@ const SkillBadge = ({ skill, index }) => {
  * Individual job listing card with hover animations
  */
 const JobCard = ({ job, index }) => {
-  const skills = Array.isArray(job.skills_extracted) 
-    ? job.skills_extracted 
-    : [];
+  const skills = Array.isArray(job.skills_extracted) ? job.skills_extracted : [];
+  const postedDate = job.posted_date;
+  const relativePosted = formatRelativeTime(postedDate);
 
   return (
-    <motion.div
+    <motion.a
+      href={job.job_url || "#"}
+      target="_blank"
+      rel="noopener noreferrer"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: index * 0.1 }}
-      whileHover={{ 
-        scale: 1.02,
-        transition: { duration: 0.2 }
-      }}
+      whileHover={{ scale: 1.02 }}
       whileTap={{ scale: 0.98 }}
-      className="h-full"
+      className="h-full block"
     >
       <Card className="h-full hover:shadow-lg transition-shadow duration-200 cursor-pointer border-l-4 border-l-primary-500">
         <CardHeader className="pb-3">
@@ -123,16 +127,14 @@ const JobCard = ({ job, index }) => {
             {job.location && (
               <div className="flex items-center space-x-1">
                 <MapPin className="h-4 w-4" />
-                <span className="truncate max-w-[120px]">
-                  {job.location}
-                </span>
+                <span className="truncate max-w-[120px]">{job.location}</span>
               </div>
             )}
           </CardDescription>
         </CardHeader>
 
         <CardContent className="pt-0">
-          {/* Skills Section */}
+          {/* Skills */}
           {skills.length > 0 && (
             <div className="mb-4">
               <div className="flex flex-wrap gap-2">
@@ -144,10 +146,7 @@ const JobCard = ({ job, index }) => {
                   />
                 ))}
                 {skills.length > 6 && (
-                  <Badge 
-                    variant="outline" 
-                    className="text-xs px-2 py-1 rounded-full font-medium text-muted-foreground"
-                  >
+                  <Badge variant="outline" className="text-xs px-2 py-1 rounded-full font-medium text-muted-foreground">
                     +{skills.length - 6} more
                   </Badge>
                 )}
@@ -159,10 +158,8 @@ const JobCard = ({ job, index }) => {
           <div className="flex items-center justify-between text-sm">
             <div className="flex items-center space-x-1 text-muted-foreground">
               <Clock className="h-4 w-4" />
-              <span>{formatRelativeTime(job.scraped_date)}</span>
+              <span>{relativePosted}</span>
             </div>
-            
-            {/* Job source indicator */}
             <Badge variant="outline" className="text-xs">
               <Briefcase className="h-3 w-3 mr-1" />
               Job
@@ -170,9 +167,12 @@ const JobCard = ({ job, index }) => {
           </div>
         </CardContent>
       </Card>
-    </motion.div>
+    </motion.a>
   );
 };
+
+
+
 
 /**
  * Pagination Component
@@ -287,14 +287,18 @@ const JobsList = ({ jobs: propJobs }) => {
     }
   };
 
+
+  // Apply filter when preparing currentJobs
+const filteredJobs = jobsData.filter(job => job.posted_date !== null);
+
   /**
    * Calculate pagination values
    */
-  const totalJobs = jobsData.length;
-  const totalPages = Math.ceil(totalJobs / jobsPerPage);
-  const startIndex = (currentPage - 1) * jobsPerPage;
-  const endIndex = startIndex + jobsPerPage;
-  const currentJobs = jobsData.slice(startIndex, endIndex);
+const totalJobs = filteredJobs.length;
+const totalPages = Math.ceil(totalJobs / jobsPerPage);
+const startIndex = (currentPage - 1) * jobsPerPage;
+const endIndex = startIndex + jobsPerPage;
+const currentJobs = filteredJobs.slice(startIndex, endIndex);
 
   /**
    * Handle page change

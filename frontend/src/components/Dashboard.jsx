@@ -29,11 +29,6 @@ import SkillsTable from './SkillsTable';
 import JobsList from './JobsList';
 import MarketSummaryCard from './MarketSummaryCard';
 
-/**
- * MarketSummaryCard Component
- * Displays key market statistics and metrics
- */
-<MarketSummaryCard />
 
 /**
  * Main Dashboard Component
@@ -162,13 +157,13 @@ const Dashboard = () => {
         />
         
         {/* Second Row - Trend Chart and Skills Table */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="">
           {/* Trend Chart - 2/3 Width on Large Screens */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
-            className="lg:col-span-8"
+            className="lg:col-span-8 mb-5"
           >
             <TrendChart />
           </motion.div>
@@ -207,7 +202,7 @@ const Dashboard = () => {
             variant="link" 
             size="sm" 
             onClick={refreshAllData}
-            className="ml-2 text-xs"
+            className="ml-2 text-xs text-secondary-100 bg-gradient"
           >
             Refresh Now
           </Button>

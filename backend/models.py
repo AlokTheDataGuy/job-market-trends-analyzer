@@ -65,6 +65,9 @@ class MarketSummary(BaseModel):
     top_locations: List[Dict[str, Any]] = []
     skill_categories: Dict[str, int] = {}
     total_unique_skills: int
+    total_companies: int   # 👈 NEW
+    total_locations: int   # 👈 NEW
+
 
 class JobSearchResponse(BaseModel):
     jobs: List[JobRecord]

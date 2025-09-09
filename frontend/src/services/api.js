@@ -116,11 +116,20 @@ class ApiService {
    * @returns {Promise<Object>}
    */
   async getSkillAnalytics(skillName, days = 30) {
-    const response = await this.client.get(`/api/analytics/skill/${encodeURIComponent(skillName)}`, {
-      params: { days }
-    });
-    return response.data; // This will be the extracted data from APIResponse
+  const response = await this.client.get(`/api/analytics/skill/${encodeURIComponent(skillName)}`, {
+    params: { days }
+  });
+  
+  // Transform the data to match what TrendChart expects
+  if (response.data && response.data.daily_trend) {
+    response.data.timeline = response.data.daily_trend.map(item => ({
+      date: item._id,  // The date is in _id from the aggregation
+      count: item.job_count
+    }));
   }
+  
+  return response.data;
+}
 
   /**
    * Get market summary statistics

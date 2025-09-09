@@ -24,9 +24,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 // Import custom components (we'll create these next)
 import Dashboard from '@/components/Dashboard';
-import TrendChart from '@/components/TrendChart';
-import SkillsTable from '@/components/SkillsTable';
-import JobsList from '@/components/JobsList';
 
 // Import API service
 import { apiService } from '@/services/api';
@@ -158,7 +155,7 @@ function App() {
             )}
 
             {/* Theme Toggle */}
-            <div className="flex items-center space-x-2">
+<div className="flex items-center space-x-4">
               <Sun className="h-4 w-4 text-muted-foreground" />
               <Switch 
                 checked={darkMode}
@@ -309,7 +306,7 @@ function App() {
     <main className="min-h-screen bg-background">
       {/* Hero Section */}
       <section className="bg-gradient-to-br from-primary-50 to-secondary-50 dark:from-primary-900/20 dark:to-secondary-900/20 border-b border-border">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 mt-1">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
