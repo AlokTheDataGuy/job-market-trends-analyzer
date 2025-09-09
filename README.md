@@ -1,11 +1,7 @@
 
-# Job Market Trends Analyzer
-
 <div align="center">
 
-
-
-
+# Job Market Trends Analyzer
 
 **🚀 Real-time job market insights with AI-powered skill extraction and trend analysis**
 
@@ -14,6 +10,13 @@
 [🔴 Live Demo](https://your-demo-url.vercel.app) | [📖 Documentation](#documentation) | [🛠️ Installation](#installation)
 
 </div>
+
+![Screenshot1](./screenshots/Screenshot1.png)
+![Screenshot2](./screenshots/Screenshot2.png)
+![Screenshot3](./screenshots/Screenshot3.png)
+![Screenshot4](./screenshots/Screenshot4.png)
+![Screenshot5](./screenshots/Screenshot5.png)
+
 
 ***
 
