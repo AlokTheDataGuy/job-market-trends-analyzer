@@ -11,7 +11,12 @@ import {
   Filter,
   RefreshCw,
   AlertCircle,
-  Eye
+  Eye,
+  Info,
+  Calendar,
+  Building2,
+  MapPin,
+  Activity
 } from 'lucide-react';
 
 // Import shadcn/ui components
@@ -29,52 +34,19 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Progress } from '@/components/ui/progress';
 
 // Import API service
 import { apiService } from '@/services/api';
 
 /**
- * Table Header Component with Sorting
- * Provides clickable headers with sort indicators
+ * Enhanced Growth Rate Badge with Tooltip Details
  */
-const SortableHeader = ({ children, sortKey, currentSort, onSort, className = "" }) => {
-  const isActive = currentSort.key === sortKey;
-  const direction = currentSort.direction;
-
-  return (
-    <TableHead className={`cursor-pointer select-none ${className}`}>
-      <div 
-        className="flex items-center space-x-1 hover:text-foreground transition-colors"
-        onClick={() => onSort(sortKey)}
-      >
-        <span>{children}</span>
-        <div className="flex flex-col">
-          <ChevronUp 
-            className={`h-3 w-3 ${
-              isActive && direction === 'asc' 
-                ? 'text-primary-600' 
-                : 'text-muted-foreground/50'
-            }`} 
-          />
-          <ChevronDown 
-            className={`h-3 w-3 -mt-1 ${
-              isActive && direction === 'desc' 
-                ? 'text-primary-600' 
-                : 'text-muted-foreground/50'
-            }`} 
-          />
-        </div>
-      </div>
-    </TableHead>
-  );
-};
-
-/**
- * Growth Rate Badge Component
- * Displays growth rate with appropriate color coding
- */
-const GrowthRateBadge = ({ growthRate }) => {
-  if (growthRate === null || growthRate === undefined) {
+const EnhancedGrowthRateBadge = ({ skill }) => {
+  const { growth_rate, growth_rates_detail, trend_direction } = skill;
+  
+  if (growth_rate === null || growth_rate === undefined) {
     return (
       <Badge variant="secondary" className="text-xs">
         N/A
@@ -82,54 +54,97 @@ const GrowthRateBadge = ({ growthRate }) => {
     );
   }
 
-  const isPositive = growthRate > 0;
-  const isZero = growthRate === 0;
+  const isPositive = growth_rate > 0;
+  const isZero = growth_rate === 0;
+
+  // Determine trend icon and color
+  const getTrendIcon = () => {
+    switch (trend_direction) {
+      case 'up': return <TrendingUp className="h-3 w-3" />;
+      case 'down': return <TrendingDown className="h-3 w-3" />;
+      default: return <Activity className="h-3 w-3" />;
+    }
+  };
+
+  const getTrendColor = () => {
+    switch (trend_direction) {
+      case 'up': return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400';
+      case 'down': return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
+      default: return 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400';
+    }
+  };
 
   return (
-    <Badge 
-      variant={isPositive ? "default" : isZero ? "secondary" : "destructive"}
-      className={`text-xs font-medium ${
-        isPositive 
-          ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' 
-          : isZero
-          ? 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
-          : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-      }`}
-    >
-      <div className="flex items-center space-x-1">
-        {isPositive ? (
-          <TrendingUp className="h-3 w-3" />
-        ) : isZero ? (
-          <div className="h-3 w-3" />
-        ) : (
-          <TrendingDown className="h-3 w-3" />
-        )}
-        <span>{isPositive ? '+' : ''}{growthRate.toFixed(1)}%</span>
-      </div>
-    </Badge>
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Badge 
+            variant="outline"
+            className={`text-xs font-medium cursor-help ${getTrendColor()}`}
+          >
+            <div className="flex items-center space-x-1">
+              {getTrendIcon()}
+              <span>{isPositive ? '+' : ''}{growth_rate.toFixed(1)}%</span>
+            </div>
+          </Badge>
+        </TooltipTrigger>
+        <TooltipContent side="top" className="max-w-xs">
+          <div className="text-xs space-y-1">
+            <div className="font-semibold">Growth Details</div>
+            {growth_rates_detail && (
+              <>
+                {growth_rates_detail['7d_vs_23d'] && (
+                  <div>Recent (7d): {growth_rates_detail['7d_vs_23d'].toFixed(1)}%</div>
+                )}
+                {growth_rates_detail['30d_vs_30d'] && (
+                  <div>Medium-term: {growth_rates_detail['30d_vs_30d'].toFixed(1)}%</div>
+                )}
+                <div className="text-muted-foreground">
+                  Trend: {trend_direction || 'stable'}
+                </div>
+              </>
+            )}
+          </div>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 };
 
 /**
- * Category Badge Component
- * Displays skill category with color coding
+ * Enhanced Category Badge with Better Mapping
  */
-const CategoryBadge = ({ category }) => {
+const EnhancedCategoryBadge = ({ category }) => {
   if (!category) {
     return (
       <Badge variant="outline" className="text-xs">
-        Uncategorized
+        Other
       </Badge>
     );
   }
 
+  // Map backend categories to display categories
+  const categoryMapping = {
+    'programming': 'Programming',
+    'frontend': 'Frontend',
+    'backend': 'Backend',
+    'databases': 'Database',
+    'cloud': 'Cloud',
+    'mobile': 'Mobile',
+    'data': 'Analytics',
+    'tools': 'DevOps'
+  };
+
+  const displayCategory = categoryMapping[category.toLowerCase()] || 
+    category.charAt(0).toUpperCase() + category.slice(1);
+
   const categoryColors = {
     'Programming': 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-    'Framework': 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
-    'Database': 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+    'Frontend': 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
+    'Backend': 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+    'Database': 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
     'Cloud': 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
     'DevOps': 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
-    'Design': 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400',
     'Analytics': 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400',
     'Mobile': 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400'
   };
@@ -137,16 +152,122 @@ const CategoryBadge = ({ category }) => {
   return (
     <Badge 
       variant="secondary" 
-      className={`text-xs ${categoryColors[category] || 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'}`}
+      className={`text-xs ${categoryColors[displayCategory] || 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'}`}
     >
-      {category}
+      {displayCategory}
     </Badge>
   );
 };
 
 /**
- * Main SkillsTable Component
- * Displays skills data in a sortable, filterable table
+ * Job Count Progress Bar with Multiple Periods
+ */
+const JobCountDisplay = ({ skill }) => {
+  const { job_count_7d, job_count_30d, job_count_60d } = skill;
+  const maxCount = Math.max(job_count_7d || 0, job_count_30d || 0, job_count_60d || 0);
+
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div className="cursor-help">
+            <div className="font-semibold text-sm">
+              {(job_count_30d || 0).toLocaleString()}
+            </div>
+            <div className="w-full bg-muted rounded-full h-1.5 mt-1">
+              <div
+                className="bg-primary h-1.5 rounded-full transition-all duration-300"
+                style={{
+                  width: `${maxCount > 0 ? ((job_count_30d || 0) / maxCount) * 100 : 0}%`
+                }}
+              />
+            </div>
+          </div>
+        </TooltipTrigger>
+        <TooltipContent side="top" className="max-w-xs">
+          <div className="text-xs space-y-1">
+            <div className="font-semibold">Job Distribution</div>
+            <div>Last 7 days: {(job_count_7d || 0).toLocaleString()}</div>
+            <div>Last 30 days: {(job_count_30d || 0).toLocaleString()}</div>
+            <div>Last 60 days: {(job_count_60d || 0).toLocaleString()}</div>
+          </div>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+};
+
+/**
+ * Skill Detail Expandable Row
+ */
+const SkillDetailRow = ({ skill, isExpanded }) => {
+  if (!isExpanded) return null;
+
+  return (
+    <motion.tr
+      initial={{ opacity: 0, height: 0 }}
+      animate={{ opacity: 1, height: 'auto' }}
+      exit={{ opacity: 0, height: 0 }}
+      transition={{ duration: 0.2 }}
+    >
+      <TableCell colSpan={5} className="bg-muted/30 p-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+          {/* Companies */}
+          <div>
+            <div className="flex items-center space-x-2 mb-2">
+              <Building2 className="h-4 w-4 text-muted-foreground" />
+              <span className="font-medium">Top Companies</span>
+            </div>
+            <div className="flex flex-wrap gap-1">
+              {(skill.companies_hiring || []).slice(0, 5).map((company, idx) => (
+                <Badge key={idx} variant="outline" className="text-xs">
+                  {company}
+                </Badge>
+              ))}
+              {(skill.companies_hiring || []).length > 5 && (
+                <Badge variant="outline" className="text-xs">
+                  +{(skill.companies_hiring || []).length - 5} more
+                </Badge>
+              )}
+            </div>
+          </div>
+
+          {/* Locations */}
+          <div>
+            <div className="flex items-center space-x-2 mb-2">
+              <MapPin className="h-4 w-4 text-muted-foreground" />
+              <span className="font-medium">Top Locations</span>
+            </div>
+            <div className="flex flex-wrap gap-1">
+              {(skill.top_locations || []).slice(0, 5).map((location, idx) => (
+                <Badge key={idx} variant="outline" className="text-xs">
+                  {location}
+                </Badge>
+              ))}
+              {(skill.top_locations || []).length > 5 && (
+                <Badge variant="outline" className="text-xs">
+                  +{(skill.top_locations || []).length - 5} more
+                </Badge>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Salary Information */}
+        {(skill.avg_salary_min || skill.avg_salary_max) && (
+          <div className="mt-3 pt-3 border-t border-border">
+            <div className="text-sm text-muted-foreground">
+              Avg. Salary: ₹{(skill.avg_salary_min || 0).toLocaleString()} - ₹{(skill.avg_salary_max || 0).toLocaleString()}
+            </div>
+          </div>
+        )}
+      </TableCell>
+    </motion.tr>
+  );
+};
+
+/**
+ * Main Enhanced SkillsTable Component
  */
 const SkillsTable = ({ skills: propSkills }) => {
   // State management
@@ -154,6 +275,7 @@ const SkillsTable = ({ skills: propSkills }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [expandedRows, setExpandedRows] = useState(new Set());
   const [sortConfig, setSortConfig] = useState({
     key: 'job_count_30d',
     direction: 'desc'
@@ -187,6 +309,19 @@ const SkillsTable = ({ skills: propSkills }) => {
   };
 
   /**
+   * Handle row expansion
+   */
+  const toggleRowExpansion = (skillName) => {
+    const newExpanded = new Set(expandedRows);
+    if (newExpanded.has(skillName)) {
+      newExpanded.delete(skillName);
+    } else {
+      newExpanded.add(skillName);
+    }
+    setExpandedRows(newExpanded);
+  };
+
+  /**
    * Handle sorting configuration
    */
   const handleSort = (key) => {
@@ -205,7 +340,8 @@ const SkillsTable = ({ skills: propSkills }) => {
     // Apply search filter
     if (searchTerm) {
       filtered = filtered.filter(skill =>
-        skill.skill_name?.toLowerCase().includes(searchTerm.toLowerCase())
+        skill.skill_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        skill.category?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
@@ -251,7 +387,42 @@ const SkillsTable = ({ skills: propSkills }) => {
   }, [propSkills]);
 
   /**
-   * Loading Skeleton Component
+   * SortableHeader Component (same as before)
+   */
+  const SortableHeader = ({ children, sortKey, currentSort, onSort, className = "" }) => {
+    const isActive = currentSort.key === sortKey;
+    const direction = currentSort.direction;
+
+    return (
+      <TableHead className={`cursor-pointer select-none ${className}`}>
+        <div 
+          className="flex items-center space-x-1 hover:text-foreground transition-colors"
+          onClick={() => onSort(sortKey)}
+        >
+          <span>{children}</span>
+          <div className="flex flex-col">
+            <ChevronUp 
+              className={`h-3 w-3 ${
+                isActive && direction === 'asc' 
+                  ? 'text-primary-600' 
+                  : 'text-muted-foreground/50'
+              }`} 
+            />
+            <ChevronDown 
+              className={`h-3 w-3 -mt-1 ${
+                isActive && direction === 'desc' 
+                  ? 'text-primary-600' 
+                  : 'text-muted-foreground/50'
+              }`} 
+            />
+          </div>
+        </div>
+      </TableHead>
+    );
+  };
+
+  /**
+   * Loading Skeleton Component (same as before)
    */
   const LoadingSkeleton = () => (
     <div className="space-y-3">
@@ -261,13 +432,14 @@ const SkillsTable = ({ skills: propSkills }) => {
           <Skeleton className="h-4 w-16" />
           <Skeleton className="h-4 w-20" />
           <Skeleton className="h-4 w-24" />
+          <Skeleton className="h-4 w-16" />
         </div>
       ))}
     </div>
   );
 
   /**
-   * Error State Component
+   * Error State Component (same as before)
    */
   const ErrorState = () => (
     <Alert className="border-error-200 bg-error-50 dark:bg-error-900/10">
@@ -287,7 +459,7 @@ const SkillsTable = ({ skills: propSkills }) => {
   );
 
   /**
-   * Empty State Component
+   * Empty State Component (same as before)
    */
   const EmptyState = () => (
     <div className="text-center py-12">
@@ -329,7 +501,7 @@ const SkillsTable = ({ skills: propSkills }) => {
               </CardTitle>
               <CardDescription className="flex items-center space-x-2 mt-1">
                 <Eye className="h-4 w-4" />
-                <span>Most in-demand skills in the market</span>
+                <span>Most in-demand skills based on job posting trends</span>
                 {processedSkills.length > 0 && (
                   <Badge variant="secondary" className="ml-2">
                     Top {processedSkills.length} skills
@@ -353,7 +525,7 @@ const SkillsTable = ({ skills: propSkills }) => {
             <Search className="absolute left-3 top-1/2 h-4 w-4 text-muted-foreground transform -translate-y-1/2" />
             <Input
               type="text"
-              placeholder="Search skills..."
+              placeholder="Search skills or categories..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
@@ -381,7 +553,7 @@ const SkillsTable = ({ skills: propSkills }) => {
           {/* Empty State */}
           {!isLoading && !error && processedSkills.length === 0 && <EmptyState />}
           
-          {/* Skills Table */}
+          {/* Enhanced Skills Table */}
           {!isLoading && !error && processedSkills.length > 0 && (
             <motion.div 
               initial={{ opacity: 0 }}
@@ -405,7 +577,7 @@ const SkillsTable = ({ skills: propSkills }) => {
                         sortKey="job_count_30d"
                         currentSort={sortConfig}
                         onSort={handleSort}
-                        className="min-w-[100px]"
+                        className="min-w-[120px]"
                       >
                         Jobs (30d)
                       </SortableHeader>
@@ -425,40 +597,65 @@ const SkillsTable = ({ skills: propSkills }) => {
                       >
                         Category
                       </SortableHeader>
+                      <TableHead className="w-[50px]">
+                        Details
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     <AnimatePresence>
-                      {processedSkills.map((skill, index) => (
-                        <motion.tr
-                          key={skill.skill_name || index}
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -10 }}
-                          transition={{ duration: 0.2, delay: index * 0.02 }}
-                          className="hover:bg-muted/50 transition-colors"
-                        >
-                          <TableCell className="font-medium">
-                            <div className="flex items-center space-x-2">
-                              <div className="w-2 h-2 rounded-full bg-primary-500 opacity-60" />
-                              <span className="truncate max-w-[120px] sm:max-w-none">
-                                {skill.skill_name}
-                              </span>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="font-semibold">
-                              {skill.job_count_30d?.toLocaleString() || 0}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <GrowthRateBadge growthRate={skill.growth_rate} />
-                          </TableCell>
-                          <TableCell>
-                            <CategoryBadge category={skill.category} />
-                          </TableCell>
-                        </motion.tr>
-                      ))}
+                      {processedSkills.map((skill, index) => {
+                        const skillKey = skill.skill_name || `skill-${index}`;
+                        const isExpanded = expandedRows.has(skillKey);
+                        
+                        return (
+                          <React.Fragment key={skillKey}>
+                            <motion.tr
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -10 }}
+                              transition={{ duration: 0.2, delay: index * 0.02 }}
+                              className="hover:bg-muted/50 transition-colors"
+                            >
+                              <TableCell className="font-medium">
+                                <div className="flex items-center space-x-2">
+                                  <div className="w-2 h-2 rounded-full bg-primary-500 opacity-60" />
+                                  <span className="truncate max-w-[120px] sm:max-w-none">
+                                    {skill.skill_name}
+                                  </span>
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <JobCountDisplay skill={skill} />
+                              </TableCell>
+                              <TableCell>
+                                <EnhancedGrowthRateBadge skill={skill} />
+                              </TableCell>
+                              <TableCell>
+                                <EnhancedCategoryBadge category={skill.category} />
+                              </TableCell>
+                              <TableCell>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => toggleRowExpansion(skillKey)}
+                                  className="h-8 w-8 p-0"
+                                >
+                                  <ChevronDown 
+                                    className={`h-4 w-4 transition-transform duration-200 ${
+                                      isExpanded ? 'rotate-180' : ''
+                                    }`} 
+                                  />
+                                </Button>
+                              </TableCell>
+                            </motion.tr>
+                            <SkillDetailRow 
+                              skill={skill} 
+                              isExpanded={isExpanded} 
+                            />
+                          </React.Fragment>
+                        );
+                      })}
                     </AnimatePresence>
                   </TableBody>
                 </Table>
@@ -466,7 +663,7 @@ const SkillsTable = ({ skills: propSkills }) => {
             </motion.div>
           )}
 
-          {/* Table Footer with Summary */}
+          {/* Enhanced Table Footer */}
           {!isLoading && !error && processedSkills.length > 0 && (
             <motion.div
               initial={{ opacity: 0, y: 10 }}
@@ -483,15 +680,15 @@ const SkillsTable = ({ skills: propSkills }) => {
                 </div>
                 <div className="flex items-center space-x-4">
                   <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 rounded bg-green-500" />
+                    <TrendingUp className="h-3 w-3 text-green-500" />
                     <span className="text-xs">Growing</span>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 rounded bg-red-500" />
+                    <TrendingDown className="h-3 w-3 text-red-500" />
                     <span className="text-xs">Declining</span>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 rounded bg-gray-400" />
+                    <Activity className="h-3 w-3 text-gray-400" />
                     <span className="text-xs">Stable</span>
                   </div>
                 </div>

@@ -1,4 +1,4 @@
-# database.py
+# database.py - CORRECTED VERSION
 import os
 import certifi
 from pymongo import MongoClient, ASCENDING, DESCENDING
@@ -44,26 +44,33 @@ class MongoDB:
             logger.error(f"❌ MongoDB connection failed: {e}")
             raise
 
-    
     def _create_indexes(self):
-        """Create database indexes for performance"""
+        """Create database indexes for performance - FIXED VERSION"""
         try:
             # Jobs collection indexes
             self.jobs.create_index([("job_hash", ASCENDING)], unique=True)
             self.jobs.create_index([("scraped_date", DESCENDING)])
+            self.jobs.create_index([("posted_date", DESCENDING)])  # 🆕 Added for posted_date analytics
             self.jobs.create_index([("search_term", ASCENDING)])
             self.jobs.create_index([("location", ASCENDING)])
             self.jobs.create_index([("company", ASCENDING)])
             self.jobs.create_index([("skills_extracted.skill", ASCENDING)])
+            self.jobs.create_index([("title", "text"), ("description", "text")])
             
-            # Skills trends collection indexes
-            self.skills_trends.create_index([("skill_name", ASCENDING)], unique=True)
+            # Skills trends collection indexes - FIXED
+            # 🚫 REMOVED: self.skills_trends.create_index([("skill_name", ASCENDING)], unique=True)
+            # ✅ CORRECT: Create compound unique index instead
+            self.skills_trends.create_index(
+                [("skill_name", ASCENDING), ("category", ASCENDING)], 
+                unique=True,
+                name="skill_name_category_unique"
+            )
             self.skills_trends.create_index([("category", ASCENDING)])
             self.skills_trends.create_index([("job_count_30d", DESCENDING)])
+            self.skills_trends.create_index([("growth_rate", DESCENDING)])  # 🆕 Added for trending skills
             
             # Market summary collection indexes
             self.market_summary.create_index([("date", DESCENDING)])
-            self.jobs.create_index([("title", "text"), ("description", "text")])
 
             logger.info("✅ Database indexes created")
             
@@ -89,11 +96,17 @@ class MongoDB:
             return {}
     
     def cleanup_old_data(self, days: int = 90) -> int:
-        """Remove jobs older than specified days"""
+        """Remove jobs older than specified days - Updated to use posted_date"""
         from datetime import datetime, timedelta
         cutoff_date = datetime.now() - timedelta(days=days)
         
-        result = self.jobs.delete_many({"scraped_date": {"$lt": cutoff_date}})
+        # Try to cleanup based on posted_date first, then scraped_date as fallback
+        result = self.jobs.delete_many({
+            "$or": [
+                {"posted_date": {"$lt": cutoff_date}},
+                {"scraped_date": {"$lt": cutoff_date}}
+            ]
+        })
         deleted_count = result.deleted_count
         
         logger.info(f"🗑️ Cleaned up {deleted_count} old job records")

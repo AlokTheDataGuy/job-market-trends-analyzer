@@ -252,11 +252,14 @@ class JobScraper:
         except Exception as e:
             logger.error(f"❌ Error saving metrics: {e}")
 
+    # In your scraper.py file, update this method:
     def update_skill_trends(self):
         logger.info("📊 Updating skill trends...")
-        trends_updated = self.analytics.calculate_skill_trends(30)
+        # FIXED: Use correct method signature
+        trends_updated = self.analytics.calculate_skill_trends(days_periods=[7, 30, 60])
         self.analytics.generate_market_summary()
         return trends_updated
+
 
     def get_comprehensive_stats(self):
         """Get comprehensive statistics using your database module"""
