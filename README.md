@@ -1,7 +1,7 @@
 
 <div align="center">
 
-# Job Market Trends Analyzer
+# 📊 Job Market Trends Analyzer 📈
 
 **🚀 Real-time job market insights with AI-powered skill extraction and trend analysis**
 
